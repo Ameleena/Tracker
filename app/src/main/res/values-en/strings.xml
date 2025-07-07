@@ -1,0 +1,81 @@
+<resources>
+
+    <string name="app_name">Tracker</string>
+
+    <string name="home_title">Home</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="dark_theme">Dark Theme</string>
+
+    <string name="change_language">Change language</string>
+
+    <string name="language_selection">Language selection</string>
+    <string name="russian">Russian</string>
+    <string name="english">English</string>
+
+    <string name="reset_data">Reset Data</string>
+
+    <string name="data_reset">Data Reset</string>
+    <string name="reset_message">Do you really want to reset data?</string>
+    <string name="reset">Reset</string>
+
+    <string name="description">Description</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">Add</string>
+
+    <string name="delete">Delete</string>
+    <string name="delete_message">Are you sure you want to delete the operation?</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+
+    <string name="ok">OK</string>
+
+    <string name="selected_period">Selected period</string>
+
+    <!-- Main screens -->
+    <string name="habits_title">Habits</string>
+    <string name="habit_log_title">Logs</string>
+    <string name="habit_stat_title">Statistics</string>
+
+    <!-- Habits -->
+    <string name="add_habit">Add Habit</string>
+    <string name="habit_name">Habit Name</string>
+    <string name="habit_description">Description (optional)</string>
+    <string name="delete_habit">Delete Habit</string>
+    <string name="delete_habit_message">Are you sure you want to delete habit "%s"?</string>
+    <string name="no_habits_yet">You don\'t have any habits yet</string>
+    <string name="add_first_habit">Tap + to add your first habit</string>
+
+    <!-- Logs -->
+    <string name="mark_completion">Mark Completion</string>
+    <string name="today_completed">Today completed!</string>
+    <string name="completion_history">Completion History</string>
+    <string name="no_completion_records">No completion records yet</string>
+    <string name="delete_record">Delete Record</string>
+    <string name="delete_record_message">Delete completion record for %s?</string>
+
+    <!-- Statistics -->
+    <string name="statistics">Statistics</string>
+    <string name="period">Period</string>
+    <string name="days_7">7 days</string>
+    <string name="days_30">30 days</string>
+    <string name="days_90">90 days</string>
+    <string name="general_statistics">General Statistics</string>
+    <string name="completed">Completed</string>
+    <string name="missed">Missed</string>
+    <string name="percentage">Percentage</string>
+    <string name="completion_calendar">Completion Calendar</string>
+    <string name="recent_records">Recent Records</string>
+    <string name="completed_status">Completed</string>
+    <string name="not_completed_status">Not Completed</string>
+
+    <!-- Navigation -->
+    <string name="back">Back</string>
+    <string name="mark">Mark</string>
+    <string name="statistics_short">Stats</string>
+
+    <!-- Dates -->
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+</resources>

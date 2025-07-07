@@ -1,0 +1,73 @@
+<resources>
+    <string name="app_name">Трекер</string>
+
+    <string name="home_title">Главная</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="dark_theme">Темная тема</string>
+
+    <string name="change_language">Сменить язык</string>
+
+    <string name="language_selection">Выбор языка</string>
+    <string name="russian">Русский</string>
+    <string name="english">Английский</string>
+
+    <string name="reset_data">Сбросить данные</string>
+
+    <string name="data_reset">Сброс данных</string>
+    <string name="reset_message">Вы действительно хотите сбросить данные?</string>
+    <string name="reset">Сбросить</string>
+
+    <string name="description">Описание</string>
+    <string name="cancel">Отмена</string>
+    <string name="add">Добавить</string>
+
+    <string name="delete">Удалить</string>
+    <string name="delete_message">Вы действительно хотите удалить операцию?</string>
+    <string name="no">Нет</string>
+    <string name="yes">Да</string>
+    <string name="ok">Ок</string>
+
+    <string name="selected_period">Выбранный период</string>
+
+    <string name="habits_title">Привычки</string>
+    <string name="habit_log_title">Отметки</string>
+    <string name="habit_stat_title">Статистика</string>
+
+    <string name="add_habit">Добавить привычку</string>
+    <string name="habit_name">Название привычки</string>
+    <string name="habit_description">Описание (необязательно)</string>
+    <string name="delete_habit">Удалить привычку</string>
+    <string name="delete_habit_message">Вы уверены, что хотите удалить привычку "%s"?</string>
+    <string name="no_habits_yet">У вас пока нет привычек</string>
+    <string name="add_first_habit">Нажмите + чтобы добавить первую привычку</string>
+
+    <string name="mark_completion">Отметить выполнение</string>
+    <string name="today_completed">Сегодня выполнено!</string>
+    <string name="completion_history">История выполнения</string>
+    <string name="no_completion_records">Пока нет записей о выполнении</string>
+    <string name="delete_record">Удалить запись</string>
+    <string name="delete_record_message">Удалить запись о выполнении за %s?</string>
+
+    <string name="statistics">Статистика</string>
+    <string name="period">Период</string>
+    <string name="days_7">7 дней</string>
+    <string name="days_30">30 дней</string>
+    <string name="days_90">90 дней</string>
+    <string name="general_statistics">Общая статистика</string>
+    <string name="completed">Выполнено</string>
+    <string name="missed">Пропущено</string>
+    <string name="percentage">Процент</string>
+    <string name="completion_calendar">Календарь выполнения</string>
+    <string name="recent_records">Последние записи</string>
+    <string name="completed_status">Выполнено</string>
+    <string name="not_completed_status">Не выполнено</string>
+
+    <string name="back">Назад</string>
+    <string name="mark">Отметить</string>
+    <string name="statistics_short">Статистика</string>
+
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
+
+</resources>
