@@ -91,9 +91,7 @@ class HabitViewModel(
                     }
                 }
                 _habitStats.value = statsList
-                if (habitsList.isNotEmpty()) {
-                    _isLoading.value = false
-                }
+                _isLoading.value = false // Сбрасываем всегда, даже если список пустой
             }
         }
     }
