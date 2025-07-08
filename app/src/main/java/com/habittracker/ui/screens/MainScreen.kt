@@ -2,30 +2,24 @@ package com.habittracker.ui.screens
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.habittracker.domain.model.Habit
 import com.habittracker.ui.viewmodels.HabitViewModel
-import androidx.compose.ui.platform.LocalContext
-import com.habittracker.ReminderService
-import androidx.compose.ui.unit.dp
+import org.koin.androidx.compose.koinViewModel
+import androidx.compose.material.icons.automirrored.filled.List
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     habitViewModel: HabitViewModel
 ) {
     val navController = rememberNavController()
-    val context = LocalContext.current
     
     Scaffold(
         bottomBar = {
@@ -45,7 +39,7 @@ fun MainScreen(
                 NavigationBarItem(
                     selected = navController.currentDestination?.route == "stats",
                     onClick = { navController.navigate("stats") },
-                    icon = { Icon(imageVector = Icons.Default.List, contentDescription = null) },
+                    icon = { Icon(imageVector = Icons.AutoMirrored.Filled.List, contentDescription = null) },
                     label = { Text("Статистика") }
                 )
                 NavigationBarItem(
@@ -81,7 +75,7 @@ fun MainScreen(
             }
             
             composable("motivation") {
-                MotivationalQuoteScreen()
+                MotivationalQuoteScreen(viewModel = koinViewModel())
             }
             
             composable("log/{habitId}") { backStackEntry ->

@@ -24,6 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 
 data class HabitStatsCardData(
     val habit: Habit,
@@ -81,9 +82,11 @@ class HabitViewModel(
     init {
         viewModelScope.launch {
             getAllHabitsUseCase().collect { habitsList ->
-                val statsList = habitsList.map { habit ->
-                    val logs = getLogsForHabitUseCase(habit.id).firstOrNull() ?: emptyList()
-                    HabitStatsCardData(habit, calculateHabitStats(habit, logs))
+                val statsList = withContext(Dispatchers.IO) {
+                    habitsList.map { habit ->
+                        val logs = getLogsForHabitUseCase(habit.id).firstOrNull() ?: emptyList()
+                        HabitStatsCardData(habit, calculateHabitStats(habit, logs))
+                    }
                 }
                 _habitStats.value = statsList
                 if (habitsList.isNotEmpty()) {
@@ -111,7 +114,7 @@ class HabitViewModel(
             addHabitUseCase(habit)
             // Устанавливаем напоминание после сохранения привычки
             context?.let { ctx ->
-                ReminderService.createNotificationChannel(ctx, habit)
+                ReminderService.createNotificationChannel(ctx)
                 if (reminderEnabled) {
                     ReminderService.scheduleReminder(ctx, habit)
                 }
@@ -179,6 +182,9 @@ class HabitViewModel(
         getHabitsWithRemindersUseCase()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    fun getHabitsWithRemindersList(): Flow<List<Habit>> =
+        getHabitsWithRemindersUseCase()
+
     fun addHabitAsyncWithBuilder(
         name: String,
         description: String = "",
@@ -188,6 +194,8 @@ class HabitViewModel(
         context: Context? = null,
         reminderSoundUri: String = ""
     ) {
+        android.util.Log.d("HabitViewModel", "addHabitAsyncWithBuilder вызван: name=$name, reminderEnabled=$reminderEnabled, reminderTimes=$reminderTimes")
+        
         val habit = HabitBuilder()
             .setName(name)
             .setDescription(description)
@@ -197,13 +205,43 @@ class HabitViewModel(
             .setReminderDays(reminderDays)
             .setReminderSoundUri(reminderSoundUri)
             .build()
+        
         viewModelScope.launch {
-            addHabitUseCase(habit)
-            context?.let { ctx ->
-                ReminderService.createNotificationChannel(ctx, habit)
-                if (reminderEnabled) {
-                    ReminderService.scheduleReminder(ctx, habit)
+            try {
+                // Сначала сохраняем привычку в базу данных
+                android.util.Log.d("HabitViewModel", "Сохраняем привычку в базу данных: ${habit.name}")
+                addHabitUseCase(habit)
+                
+                // Ждем немного, чтобы база данных обновилась
+                kotlinx.coroutines.delay(200)
+                
+                // Получаем все привычки и находим последнюю добавленную с таким именем
+                val allHabits = getAllHabitsUseCase().firstOrNull() ?: emptyList()
+                val savedHabit = allHabits.findLast { it.name == name }
+                
+                android.util.Log.d("HabitViewModel", "Найдена сохраненная привычка: ${savedHabit?.name} (ID: ${savedHabit?.id})")
+                
+                context?.let { ctx ->
+                    if (savedHabit != null) {
+                        android.util.Log.d("HabitViewModel", "Создаем канал и планируем уведомления для привычки: ${savedHabit.name}")
+                        ReminderService.createNotificationChannel(ctx)
+                        if (reminderEnabled && reminderTimes.isNotBlank()) {
+                            android.util.Log.d("HabitViewModel", "Планируем уведомления для привычки: ${savedHabit.name}")
+                            ReminderService.scheduleReminder(ctx, savedHabit)
+                        } else {
+                            android.util.Log.d("HabitViewModel", "Уведомления отключены или время не задано для привычки: ${savedHabit.name}")
+                        }
+                    } else {
+                        android.util.Log.w("HabitViewModel", "Не удалось найти сохраненную привычку, используем исходную")
+                        // Если не удалось найти сохраненную привычку, используем исходную
+                        ReminderService.createNotificationChannel(ctx)
+                        if (reminderEnabled && reminderTimes.isNotBlank()) {
+                            ReminderService.scheduleReminder(ctx, habit)
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                android.util.Log.e("HabitViewModel", "Ошибка при добавлении привычки", e)
             }
         }
     }

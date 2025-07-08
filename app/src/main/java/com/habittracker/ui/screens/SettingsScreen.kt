@@ -19,17 +19,50 @@ import com.habittracker.ui.viewmodels.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import androidx.lifecycle.viewModelScope
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.habittracker.data.local.PreferencesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    habitViewModel: com.habittracker.ui.viewmodels.HabitViewModel = koinViewModel()
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val lastQuoteId by viewModel.lastQuoteId.collectAsState()
+    val notificationSoundUri by viewModel.notificationSoundUri.collectAsState()
     val context = LocalContext.current
+    var selectedSoundTitle by remember { mutableStateOf("(стандартный)") }
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            viewModel.setNotificationSoundUri(uri?.toString())
+            val ringtone = uri?.let { RingtoneManager.getRingtone(context, it) }
+            selectedSoundTitle = ringtone?.getTitle(context) ?: "(стандартный)"
+            // Пересоздаём канал с новым звуком
+            com.habittracker.ReminderService.createNotificationChannel(context)
+        }
+    }
+    LaunchedEffect(notificationSoundUri) {
+        notificationSoundUri?.let {
+            val ringtone = RingtoneManager.getRingtone(context, Uri.parse(it))
+            selectedSoundTitle = ringtone?.getTitle(context) ?: "(стандартный)"
+        } ?: run {
+            selectedSoundTitle = "(стандартный)"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -234,44 +267,50 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            val testHabit = com.habittracker.domain.model.Habit(
-                                id = 9999,
-                                name = "Тестовая привычка",
-                                description = "Тест уведомления",
-                                createdAt = "2025-06-27",
-                                reminderEnabled = true,
-                                reminderTimes = "09:00",
-                                reminderDays = "1,2,3,4,5,6,7",
-                                reminderSoundUri = ""
-                            )
-                            ReminderService.testNotification(context, testHabit)
+                            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Выберите звук уведомления")
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, notificationSoundUri?.let { Uri.parse(it) })
+                            }
+                            ringtonePickerLauncher.launch(intent)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
                     ) {
-                        Text("Проверить уведомление")
+                        Text("Выбрать звук для уведомлений: $selectedSoundTitle")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            // Пример привычки для теста
+                            // Тестовое уведомление через 10 секунд с текущим звуком
                             val testHabit = com.habittracker.domain.model.Habit(
-                                id = 9999,
-                                name = "Тестовая привычка",
-                                description = "Тест напоминания через 10 секунд",
+                                id = 9996,
+                                name = "Тестовый звук",
+                                description = "Тест уведомления с выбранным звуком",
                                 createdAt = "2025-06-27",
                                 reminderEnabled = true,
                                 reminderTimes = "09:00",
                                 reminderDays = "1,2,3,4,5,6,7"
                             )
-                            ReminderService.scheduleTestReminder(context, testHabit, 10)
+                            com.habittracker.ReminderService.scheduleTestReminder(context, testHabit, 10)
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary
+                        )
                     ) {
-                        Text("Тест напоминания через 10 секунд")
+                        Text("Тест уведомления через 10 сек с выбранным звуком")
                     }
                 }
             }

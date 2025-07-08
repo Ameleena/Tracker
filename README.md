@@ -43,3 +43,15 @@
 
 ## Лицензия
 MIT 
+
+## Release Management
+
+- Для автоматизации сборки и релиза используется Fastlane (см. fastlane/Fastfile).
+- Сборка debug APK: `fastlane android build_debug`
+- Сборка release APK: `fastlane android build_release`
+- Автоматическая сборка и тесты при каждом пуше — через GitHub Actions (см. .github/workflows/android-ci.yml).
+- Для публикации на Google Play или Firebase App Distribution можно добавить соответствующие lanes в Fastfile.
+
+---
+
+Проект полностью готов к командной разработке, автоматизации и релизу! 

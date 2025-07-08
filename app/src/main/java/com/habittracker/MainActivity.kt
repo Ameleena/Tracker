@@ -16,10 +16,19 @@ import com.habittracker.ui.viewmodels.HabitViewModel
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.os.Build
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
     private val habitViewModel: HabitViewModel by viewModel()
@@ -28,15 +37,44 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Создаем канал уведомлений
-        // ReminderService.createNotificationChannel(this, null)
-        // Если нужен канал по умолчанию:
-        // ReminderService.createNotificationChannel(this, Habit(id = 0, name = "Default", reminderSoundUri = ""))
+        // Создаем канал уведомлений по умолчанию
+        ReminderService.createNotificationChannel(this)
         
         // Запрашиваем разрешение на уведомления для Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+            }
+        }
+        
+        // Проверяем разрешение на точные будильники для Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Log.w("MainActivity", "Нет разрешения на точные будильники")
+                // Показываем диалог для перехода в настройки
+                val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            } else {
+                Log.d("MainActivity", "Разрешение на точные будильники есть")
+            }
+        }
+        
+        // Перепланируем уведомления для всех существующих привычек
+        Log.d("MainActivity", "Перепланируем уведомления для существующих привычек")
+        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
+            try {
+                val habitsWithReminders = habitViewModel.getHabitsWithRemindersList().first()
+                Log.d("MainActivity", "Найдено привычек с уведомлениями: ${habitsWithReminders.size}")
+                habitsWithReminders.forEach { habit ->
+                    if (habit.reminderEnabled && habit.reminderTimes.isNotBlank()) {
+                        Log.d("MainActivity", "Перепланируем уведомления для привычки: ${habit.name}")
+                        ReminderService.scheduleReminder(this@MainActivity, habit)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Ошибка при перепланировании уведомлений", e)
             }
         }
         

@@ -21,6 +21,9 @@ class SettingsViewModel(
     private val _lastQuoteId = MutableStateFlow(preferencesManager.getString("last_quote_id", null))
     val lastQuoteId: StateFlow<String?> = _lastQuoteId.asStateFlow()
     
+    private val _notificationSoundUri = MutableStateFlow(preferencesManager.getNotificationSoundUri())
+    val notificationSoundUri: StateFlow<String?> = _notificationSoundUri.asStateFlow()
+    
     fun setDarkMode(enabled: Boolean) {
         preferencesManager.setDarkMode(enabled)
         _isDarkMode.value = enabled
@@ -34,5 +37,10 @@ class SettingsViewModel(
     fun setLastQuoteId(quoteId: String?) {
         preferencesManager.setLastQuoteId(quoteId)
         _lastQuoteId.value = quoteId
+    }
+    
+    fun setNotificationSoundUri(uri: String?) {
+        preferencesManager.setNotificationSoundUri(uri)
+        _notificationSoundUri.value = uri
     }
 } 

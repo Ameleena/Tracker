@@ -53,10 +53,19 @@ class PreferencesManager(context: Context) {
         prefs.edit { putBoolean(key, value) }
     }
     
+    fun setNotificationSoundUri(uri: String?) {
+        prefs.edit { putString(KEY_NOTIFICATION_SOUND_URI, uri) }
+    }
+    
+    fun getNotificationSoundUri(): String? {
+        return prefs.getString(KEY_NOTIFICATION_SOUND_URI, null)
+    }
+    
     companion object {
         private const val PREF_NAME = "habit_tracker_prefs"
         private const val KEY_DARK_MODE = "dark_mode"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_LAST_QUOTE_ID = "last_quote_id"
+        private const val KEY_NOTIFICATION_SOUND_URI = "notification_sound_uri"
     }
 } 

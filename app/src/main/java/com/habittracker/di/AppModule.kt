@@ -62,7 +62,7 @@ val appModule = module {
     // Repositories
     single<DomainHabitRepository> { HabitRepository(get()) }
     single<DomainHabitLogRepository> { HabitLogRepository(get()) }
-    single<QuoteRepository> { QuoteRepositoryImpl(get()) }
+    single<QuoteRepository> { QuoteRepositoryImpl(get(), get()) }
     
     // Use Cases
     single { GetAllHabitsUseCase(get()) }
@@ -79,18 +79,12 @@ val appModule = module {
     single { GetRandomQuoteUseCase(get()) }
     
     // ViewModels
-    scope<HabitViewModel> {
-        scoped { HabitRepository(get()) }
-        scoped { HabitLogRepository(get()) }
-        scoped { GetAllHabitsUseCase(get()) }
-        viewModel { HabitViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    }
+    viewModel { HabitViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { QuoteViewModel(get()) }
     viewModel { SettingsViewModel(get()) }
 }
 
 // Пример тестового DI-модуля для unit-тестов
-val testAppModule = module {
-    single<QuoteRepository> { FakeQuoteRepository() } // подмена на фейковую реализацию
-    // Можно подменить и другие зависимости
-} 
+// val testAppModule = module {
+//     single<QuoteRepository> { FakeQuoteRepository() } // подмена на фейковую реализацию
+// } 

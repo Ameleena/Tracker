@@ -37,6 +37,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,7 @@ fun HabitListScreen(
 ) {
     val context = LocalContext.current
     val habits by habitViewModel.habits.collectAsState()
+    val isLoading by habitViewModel.isLoading.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<Habit?>(null) }
 
@@ -67,13 +69,13 @@ fun HabitListScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToStats) {
-                        Icon(
-                            Icons.Default.List,
-                            contentDescription = "Статистика",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    // IconButton(onClick = onNavigateToStats) {
+                    //     Icon(
+                    //         Icons.Default.List,
+                    //         contentDescription = "Статистика",
+                    //         tint = MaterialTheme.colorScheme.onSurface
+                    //     )
+                    // }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -97,27 +99,52 @@ fun HabitListScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            if (habits.isEmpty()) {
-                EmptyHabitsState()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(habits) { habit ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            HabitCard(
-                                habit = habit,
-                                onNavigateToLog = onNavigateToLog,
-                                onEdit = { onNavigateToEdit(habit) },
-                                onDelete = { habitViewModel.deleteHabit(habit.id, context) }
-                            )
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                habits.isEmpty() -> {
+                    EmptyHabitsState()
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(habits) { habit ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
+                                HabitCard(
+                                    habit = habit,
+                                    onNavigateToLog = onNavigateToLog,
+                                    onEdit = { onNavigateToEdit(habit) },
+                                    onDelete = { habitViewModel.deleteHabit(habit.id, context) }
+                                )
+                            }
                         }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Анимированная кнопка добавления привычки
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isPressed by interactionSource.collectIsPressedAsState()
+                    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f)
+                    Button(
+                        onClick = onNavigateToAdd,
+                        modifier = Modifier
+                            .scale(scale)
+                            .align(Alignment.CenterHorizontally),
+                        interactionSource = interactionSource
+                    ) {
+                        Text("Добавить привычку")
                     }
                 }
             }
@@ -417,37 +444,6 @@ fun HabitCard(habit: Habit, onClick: () -> Unit) {
             if (habit.description.isNotBlank()) {
                 Text(habit.description, style = MaterialTheme.typography.bodySmall)
             }
-        }
-    }
-}
-
-@Composable
-fun HabitListScreen(/* параметры */) {
-    // ... существующий код ...
-    val habits = /* получение списка привычек */
-    Column {
-        habits.forEachIndexed { index, habit ->
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                HabitCard(habit = habit, onClick = { /* ... */ })
-            }
-        }
-        Spacer(Modifier.height(16.dp))
-        // Анимированная кнопка добавления привычки
-        val interactionSource = remember { MutableInteractionSource() }
-        val isPressed by interactionSource.collectIsPressedAsState()
-        val scale by animateFloatAsState(if (isPressed) 0.95f else 1f)
-        Button(
-            onClick = { /* обработка добавления */ },
-            modifier = Modifier
-                .scale(scale)
-                .align(Alignment.CenterHorizontally),
-            interactionSource = interactionSource
-        ) {
-            Text("Добавить привычку")
         }
     }
 } 

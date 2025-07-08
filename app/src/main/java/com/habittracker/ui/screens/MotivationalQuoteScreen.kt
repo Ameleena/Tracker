@@ -68,6 +68,7 @@ fun MotivationalQuoteMviScreen(viewModel: QuoteMviViewModel) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val currentQuote = state.quote
         when {
             state.isLoading -> CircularProgressIndicator()
             state.error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -77,10 +78,10 @@ fun MotivationalQuoteMviScreen(viewModel: QuoteMviViewModel) {
                     Text("Повторить")
                 }
             }
-            state.quote != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(state.quote.text, style = MaterialTheme.typography.titleLarge)
+            currentQuote != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(currentQuote.text, style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(8.dp))
-                Text("— ${state.quote.author}", style = MaterialTheme.typography.bodyMedium)
+                Text("— ${currentQuote.author}", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { viewModel.processIntent(QuoteIntent.LoadQuote) }) {
                     Text("Ещё цитату")
@@ -100,6 +101,7 @@ fun MotivationalQuoteScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val currentQuote = state.quote
         when {
             state.isLoading -> CircularProgressIndicator()
             state.error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -109,10 +111,10 @@ fun MotivationalQuoteScreen(
                     Text("Повторить")
                 }
             }
-            state.quote != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(state.quote.text, style = MaterialTheme.typography.titleLarge)
+            currentQuote != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(currentQuote.text, style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(8.dp))
-                Text("— ${state.quote.author}", style = MaterialTheme.typography.bodyMedium)
+                Text("— ${currentQuote.author}", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { viewModel.processIntent(QuoteIntent.LoadQuote) }) {
                     Text("Ещё цитату")

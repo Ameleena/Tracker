@@ -1,0 +1,13 @@
+default_platform(:android)
+
+platform :android do
+  desc "Собрать debug APK"
+  lane :build_debug do
+    gradle(task: "assembleDebug")
+  end
+
+  desc "Собрать release APK"
+  lane :build_release do
+    gradle(task: "assembleRelease")
+  end
+end 

@@ -48,7 +48,6 @@ abstract class HabitDatabase : RoomDatabase() {
                     "habit_database"
                 )
                 .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
-                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
