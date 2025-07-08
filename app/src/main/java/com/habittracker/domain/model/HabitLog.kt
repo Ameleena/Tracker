@@ -5,5 +5,6 @@ data class HabitLog(
     val id: Int = 0,
     val habitId: Int,
     val date: String,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val reminderTime: String? = null
 ) 

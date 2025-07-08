@@ -101,6 +101,7 @@ fun HabitStatCard(
 ) {
     val habit = cardData.habit
     val stats = cardData.stats
+    val reminderTimes = habit.reminderTimes.split(",").map { it.trim() }.filter { it.isNotBlank() }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -167,14 +168,19 @@ fun HabitStatCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 
-                StatItem(
-                    imageVector = Icons.Default.List,
-                    value = "${stats.completionRate}%",
-                    label = "Успешность",
-                    color = if (stats.completionRate >= 80) habit_success 
-                           else if (stats.completionRate >= 50) habit_warning 
-                           else habit_missed
-                )
+                if (reminderTimes.isNotEmpty() && stats.completionRate != null) {
+                    StatItem(
+                        imageVector = Icons.Default.List,
+                        value = "${stats.completionRate}%",
+                        label = "Успешность",
+                        color = when {
+                            stats.completionRate == null -> habit_missed
+                            stats.completionRate >= 80 -> habit_success
+                            stats.completionRate >= 50 -> habit_warning
+                            else -> habit_missed
+                        }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -200,7 +206,6 @@ fun HabitStatCard(
                         color = habit_streak
                     )
                 }
-                
                 // Лучшая серия
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -218,7 +223,25 @@ fun HabitStatCard(
                         color = habit_streak
                     )
                 }
-                
+                // Ремарка о перевыполнении
+                if (stats.overCompleted > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Перевыполнено:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "на ${stats.overCompleted} раз(а)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = habit_success
+                        )
+                    }
+                }
                 // Дата создания
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -238,14 +261,16 @@ fun HabitStatCard(
             }
             
             // Прогресс-бар
-            if (stats.totalDays > 0) {
+            if (stats.totalDays > 0 && stats.completionRate != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 LinearProgressIndicator(
                     progress = stats.completionRate / 100f,
                     modifier = Modifier.fillMaxWidth(),
-                    color = if (stats.completionRate >= 80) habit_success 
-                           else if (stats.completionRate >= 50) habit_warning 
-                           else habit_missed,
+                    color = when {
+                        stats.completionRate >= 80 -> habit_success
+                        stats.completionRate >= 50 -> habit_warning
+                        else -> habit_missed
+                    },
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }

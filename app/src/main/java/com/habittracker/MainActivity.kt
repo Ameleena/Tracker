@@ -51,25 +51,19 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (!alarmManager.canScheduleExactAlarms()) {
-                Log.w("MainActivity", "Нет разрешения на точные будильники")
                 // Показываем диалог для перехода в настройки
                 val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
-            } else {
-                Log.d("MainActivity", "Разрешение на точные будильники есть")
             }
         }
         
         // Перепланируем уведомления для всех существующих привычек
-        Log.d("MainActivity", "Перепланируем уведомления для существующих привычек")
         CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
             try {
                 val habitsWithReminders = habitViewModel.getHabitsWithRemindersList().first()
-                Log.d("MainActivity", "Найдено привычек с уведомлениями: ${habitsWithReminders.size}")
                 habitsWithReminders.forEach { habit ->
                     if (habit.reminderEnabled && habit.reminderTimes.isNotBlank()) {
-                        Log.d("MainActivity", "Перепланируем уведомления для привычки: ${habit.name}")
                         ReminderService.scheduleReminder(this@MainActivity, habit)
                     }
                 }

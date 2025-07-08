@@ -11,39 +11,43 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.habittracker.ui.viewmodels.HabitViewModel
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.material.icons.automirrored.filled.List
+import com.habittracker.ui.screens.QuoteMviViewModel
 
 @Composable
 fun MainScreen(
     habitViewModel: HabitViewModel
 ) {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     
     Scaffold(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = navController.currentDestination?.route == "habits",
+                    selected = currentRoute == "habits" || currentRoute?.startsWith("log/") == true || currentRoute?.startsWith("edit/") == true || currentRoute == "add",
                     onClick = { navController.navigate("habits") },
                     icon = { Icon(imageVector = Icons.Default.Star, contentDescription = null) },
                     label = { Text("Привычки") }
                 )
                 NavigationBarItem(
-                    selected = navController.currentDestination?.route == "motivation",
+                    selected = currentRoute == "motivation",
                     onClick = { navController.navigate("motivation") },
                     icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = null) },
                     label = { Text("Мотивация") }
                 )
                 NavigationBarItem(
-                    selected = navController.currentDestination?.route == "stats",
+                    selected = currentRoute == "stats",
                     onClick = { navController.navigate("stats") },
                     icon = { Icon(imageVector = Icons.AutoMirrored.Filled.List, contentDescription = null) },
                     label = { Text("Статистика") }
                 )
                 NavigationBarItem(
-                    selected = navController.currentDestination?.route == "settings",
+                    selected = currentRoute == "settings",
                     onClick = { navController.navigate("settings") },
                     icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = null) },
                     label = { Text("Настройки") }
@@ -75,7 +79,7 @@ fun MainScreen(
             }
             
             composable("motivation") {
-                MotivationalQuoteScreen(viewModel = koinViewModel())
+                MotivationalQuoteScreen(viewModel = koinViewModel<QuoteMviViewModel>())
             }
             
             composable("log/{habitId}") { backStackEntry ->

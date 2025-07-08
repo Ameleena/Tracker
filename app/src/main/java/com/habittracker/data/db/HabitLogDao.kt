@@ -8,7 +8,7 @@ interface HabitLogDao {
     @Query("SELECT * FROM habit_logs WHERE habitId = :habitId ORDER BY date DESC")
     fun getLogsForHabit(habitId: Int): Flow<List<HabitLog>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertLog(log: HabitLog)
 
     @Update
@@ -19,4 +19,7 @@ interface HabitLogDao {
 
     @Query("SELECT * FROM habit_logs WHERE habitId = :habitId AND date = :date")
     suspend fun getLogByDate(habitId: Int, date: String): HabitLog?
+
+    @Query("SELECT * FROM habit_logs WHERE habitId = :habitId AND date = :date AND reminderTime = :reminderTime LIMIT 1")
+    suspend fun getLogByDateAndTime(habitId: Int, date: String, reminderTime: String): HabitLog?
 } 

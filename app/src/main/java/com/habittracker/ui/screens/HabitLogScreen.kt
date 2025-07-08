@@ -29,6 +29,8 @@ import com.habittracker.ui.theme.habit_missed
 import com.habittracker.ui.viewmodels.HabitViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,9 @@ fun HabitLogScreen(
     val habit = habits.find { it.id == habitId }
     
     var showDeleteDialog by remember { mutableStateOf<HabitLog?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val reminderTimes = habit?.reminderTimes?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
+    val reminderDays = habit?.reminderDays?.split(",")?.mapNotNull { it.trim().toIntOrNull() } ?: emptyList() // 1=Пн, 7=Вс
 
     LaunchedEffect(Unit) {
         habitViewModel.loadHabits()
@@ -106,45 +111,170 @@ fun HabitLogScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // Кнопка отметки на сегодня
+            // Кнопки отметки на сегодня по времени
             val today = LocalDate.now()
-            val isTodayCompleted = logs.any { log ->
-                LocalDate.parse(log.date) == today
-            }
-            
-            Button(
-                onClick = {
-                    if (!isTodayCompleted) {
-                        val log = HabitLog(
-                            id = 0,
-                            habitId = habitId,
-                            date = today.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                            isCompleted = true
-                        )
-                        habitViewModel.addLog(log)
+            val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val dayOfWeek = today.dayOfWeek.value // 1=Пн, 7=Вс
+            if (reminderTimes.isNotEmpty() && reminderDays.contains(dayOfWeek)) {
+                // Кнопки по времени (запланированные)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Отметить выполнение по времени:",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    reminderTimes.forEach { time ->
+                        val isCompleted = logs.any { log -> log.date == todayStr && log.reminderTime == time && log.isCompleted }
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val canMark = habitViewModel.canMarkReminderTime(habitId, todayStr, time)
+                                    if (canMark) {
+                                        val log = HabitLog(
+                                            id = 0,
+                                            habitId = habitId,
+                                            date = todayStr,
+                                            isCompleted = true,
+                                            reminderTime = time
+                                        )
+                                        habitViewModel.addLog(log)
+                                    }
+                                }
+                            },
+                            enabled = !isCompleted,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isCompleted)
+                                    MaterialTheme.colorScheme.secondary
+                                else
+                                    habit_success
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                if (isCompleted) "${time} — выполнено" else "${time} — отметить",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
-                },
-                enabled = !isTodayCompleted,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isTodayCompleted) 
-                        MaterialTheme.colorScheme.secondary 
-                    else 
-                        habit_success
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    if (isTodayCompleted) stringResource(R.string.today_completed) else stringResource(R.string.mark_completion),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                    // Кнопка для ручного выполнения (вне расписания) — всегда активна
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                val log = HabitLog(
+                                    id = 0,
+                                    habitId = habitId,
+                                    date = todayStr,
+                                    isCompleted = true,
+                                    reminderTime = null
+                                )
+                                habitViewModel.addLog(log)
+                            }
+                        },
+                        enabled = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = habit_success
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Вне расписания — отметить",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else if (reminderTimes.isNotEmpty() && !reminderDays.contains(dayOfWeek)) {
+                // Сегодня не входит в расписание — показываем только кнопку "Вне расписания"
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val log = HabitLog(
+                                id = 0,
+                                habitId = habitId,
+                                date = todayStr,
+                                isCompleted = true,
+                                reminderTime = null
+                            )
+                            habitViewModel.addLog(log)
+                        }
+                    },
+                    enabled = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = habit_success
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Вне расписания — отметить",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else if (reminderTimes.isEmpty()) {
+                // Для привычек без времени — одна кнопка, всегда активна
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val log = HabitLog(
+                                id = 0,
+                                habitId = habitId,
+                                date = todayStr,
+                                isCompleted = true,
+                                reminderTime = null
+                            )
+                            habitViewModel.addLog(log)
+                        }
+                    },
+                    enabled = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = habit_success
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Выполнить",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -157,34 +287,75 @@ fun HabitLogScreen(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             
-            // Список логов
-            if (logs.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+            // Новый алгоритм истории
+            val createdAt = habit?.createdAt?.let { LocalDate.parse(it) } ?: today
+            val endDate = today
+            val allDates = generateSequence(createdAt) { it.plusDays(1) }
+                .takeWhile { !it.isAfter(endDate) }
+                .toList()
+                .reversed()
+            val logsByDate = logs.groupBy { it.date }
+            allDates.forEach { date ->
+                val dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                val dayOfWeekHistory = date.dayOfWeek.value // 1=Пн, 7=Вс
+                val hasReminder = reminderDays.contains(dayOfWeekHistory)
+                val dayLogs = logsByDate[dateStr] ?: emptyList()
+                val hasAnyLog = dayLogs.isNotEmpty()
+                if ((reminderTimes.isNotEmpty() && hasReminder) || hasAnyLog || reminderTimes.isEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.no_completion_records),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(logs.sortedByDescending { it.date }) { log ->
-                        LogItem(
-                            log = log,
-                            onDeleteClick = { showDeleteDialog = log }
-                        )
+                        Column(Modifier.padding(12.dp)) {
+                            Text(
+                                text = formatDate(dateStr),
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            )
+                            if (reminderTimes.isNotEmpty() && hasReminder) {
+                                reminderTimes.forEach { time ->
+                                    val log = dayLogs.find { it.reminderTime == time && it.isCompleted }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(vertical = 2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = if (log != null) habit_success else habit_missed,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = time + if (log != null) " — выполнено" else " — не выполнено",
+                                            color = if (log != null) habit_success else habit_missed,
+                                            fontSize = 15.sp
+                                        )
+                                    }
+                                }
+                            }
+                            // Для привычек без времени или "вне расписания" — считаем все логи без времени
+                            val manualLogs = dayLogs.filter { it.reminderTime == null || it.reminderTime == "" }
+                            if (manualLogs.isNotEmpty()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = habit_success,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Выполнено (x${manualLogs.size})",
+                                        color = habit_success,
+                                        fontSize = 15.sp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -252,8 +423,9 @@ fun LogItem(
                         )
                 )
                 Spacer(modifier = Modifier.width(16.dp))
+                val timeText = log.reminderTime?.let { "${formatDate(log.date)}, $it" } ?: formatDate(log.date)
                 Text(
-                    text = formatDate(log.date),
+                    text = timeText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

@@ -20,18 +20,23 @@ class HabitLogRepository(private val habitLogDao: HabitLogDao) : DomainHabitLogR
 
     override suspend fun getLogByDate(habitId: Int, date: String): DomainHabitLog? =
         habitLogDao.getLogByDate(habitId, date)?.toDomain()
+
+    override suspend fun getLogByDateAndTime(habitId: Int, date: String, reminderTime: String): DomainHabitLog? =
+        habitLogDao.getLogByDateAndTime(habitId, date, reminderTime)?.toDomain()
 }
 
 fun HabitLog.toDomain() = DomainHabitLog(
     id = id,
     habitId = habitId,
     date = date,
-    isCompleted = isCompleted
+    isCompleted = isCompleted,
+    reminderTime = reminderTime
 )
 
 fun DomainHabitLog.toData() = HabitLog(
     id = id,
     habitId = habitId,
     date = date,
-    isCompleted = isCompleted
+    isCompleted = isCompleted,
+    reminderTime = reminderTime
 ) 

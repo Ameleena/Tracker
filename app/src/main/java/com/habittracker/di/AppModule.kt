@@ -17,6 +17,8 @@ import com.habittracker.domain.usecase.*
 import com.habittracker.ui.viewmodels.HabitViewModel
 import com.habittracker.ui.viewmodels.QuoteViewModel
 import com.habittracker.ui.viewmodels.SettingsViewModel
+import com.habittracker.ui.screens.QuoteMviViewModel
+import com.habittracker.data.db.QuoteDao
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -37,6 +39,7 @@ val appModule = module {
     
     single<HabitDao> { get<HabitDatabase>().habitDao() }
     single<HabitLogDao> { get<HabitDatabase>().habitLogDao() }
+    single<QuoteDao> { get<HabitDatabase>().quoteDao() }
     
     // OkHttpClient
     single {
@@ -77,11 +80,13 @@ val appModule = module {
     single { DeleteHabitLogUseCase(get()) }
     single { GetLogByDateUseCase(get()) }
     single { GetRandomQuoteUseCase(get()) }
+    single { GetLogByDateAndTimeUseCase(get()) }
     
     // ViewModels
-    viewModel { HabitViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { HabitViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { QuoteViewModel(get()) }
     viewModel { SettingsViewModel(get()) }
+    viewModel { QuoteMviViewModel(get()) }
 }
 
 // Пример тестового DI-модуля для unit-тестов

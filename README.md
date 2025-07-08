@@ -1,57 +1,79 @@
 # Habit Tracker
 
 ## Описание
-Мобильное приложение для отслеживания привычек и финансов с использованием современных Android-технологий.
+Мобильное приложение для отслеживания привычек с гибкой системой напоминаний, историей и статистикой. Реализовано на современных Android-технологиях с использованием Clean Architecture и MVVM.
 
-## Архитектура
-- **Clean Architecture**: разделение на domain, data, ui
-- **MVVM**: ViewModel, use-case, репозитории
-- **Jetpack Compose**: декларативный UI
-- **Room**: локальная база данных
-- **Retrofit**: сетевые запросы
-- **Корутины и Flow**: асинхронность и реактивность
-- **Hilt**: Dependency Injection
-- **SharedPreferences**: для хранения настроек
-- **LiveData/StateFlow**: для реактивного UI
-- **MVVM (Model-View-ViewModel)**
-- **UseCase (бизнес-логика вынесена в отдельные классы)**
-- **Repository (работа с данными через абстракции)**
-- **Dependency Injection (Koin)**
-- **Асинхронность: Kotlin Coroutines, Flow, StateFlow, launch, async, withContext**
-- **Рефакторинг: повторяющиеся элементы вынесены в отдельные компоненты, код структурирован**
+## Скриншоты
 
-## Структура проекта
-- `domain/` — бизнес-логика, use-cases, интерфейсы репозиториев
-- `data/` — реализации репозиториев, Room, Retrofit
-- `ui/` — экраны, компоненты, темы, ViewModel
+## Используемые технологии
+- Kotlin, Jetpack Compose, Room, Retrofit, Koin, Coroutines, Flow, JUnit
+- Material Design 3, StateFlow, AndroidX, Fastlane, GitHub Actions
 
-## Сборка и запуск
-```sh
-./gradlew build
-./gradlew installDebug
-```
+## Минимальные требования
+- Android 7.0 (API 24) и выше
+- JDK 17 (Java 17)
+- Android Studio Arctic Fox или новее
+
+## Настройка и установка
+1. Клонируйте репозиторий:
+   ```
+   git clone <repo-url>
+   ```
+2. Откройте проект в Android Studio.
+3. Установите JDK 17 (https://adoptium.net/ или https://jdk.java.net/).
+4. Соберите APK:
+   ```
+   ./gradlew assembleDebug
+   ```
+5. В корне проекта появится файл:
+   ```
+   HabitTracker-latest.apk
+   ```
+6. Отправьте этот файл на нужное устройство (через почту, мессенджер, облако и т.д.).
+7. На устройстве включите "Установку из неизвестных источников" (обычно в настройках безопасности).
+8. Откройте файл и установите приложение.
+
+> APK-файл подходит для ручной установки и тестирования.
+## Функционал
+- Добавление, редактирование и удаление привычек
+- Гибкая система напоминаний (несколько времён и дней недели)
+- История выполнения с детализацией по времени и вне расписания
+- Статистика по привычкам (план/факт, streak, перевыполнение)
+- Темная и светлая тема
+- Выбор мелодии уведомления
+- Удаление логов привычек
+- Тестовое уведомление из настроек
+- Локальное хранение данных (Room)
+- Асинхронность (Kotlin Coroutines, Flow)
+- Интуитивный и современный UI (Jetpack Compose)
 
 ## Тестирование
-- Unit-тесты: `./gradlew test`
-- UI-тесты: `./gradlew connectedAndroidTest`
+- Unit-тесты моделей (Habit, HabitLog, MotivationalQuote):
+  ```
+  ./gradlew test
+  ```
+- UI-тест SplashScreen:
+  ```
+  ./gradlew connectedAndroidTest
+  ```
+- Покрытие: базовые модели и логика покрыты unit-тестами, UI — базовый smoke-тест.
 
-## CI/CD
-- GitHub Actions: автоматическая сборка, тесты и lint при каждом push/pull request в ветки `main` и `release`.
+## Архитектура
+- Clean Architecture (domain/data/ui)
+- MVVM (ViewModel, use-case, репозитории)
+- Koin для Dependency Injection
+- Разделение бизнес-логики, хранения и UI
+- Использование StateFlow для реактивного UI
 
-## Технологии
-- Kotlin, Jetpack Compose, Room, Retrofit, Hilt, Coroutines, Flow, JUnit, Mockito
+## Будущие улучшения
+- Экспорт и импорт данных
+- Синхронизация с облаком
+- Виджеты на рабочий стол
+- Push-уведомления
+- Более гибкая статистика и отчёты
+- Группировка привычек по категориям
+- Поддержка нескольких пользователей
 
-## Лицензия
-MIT 
-
-## Release Management
-
-- Для автоматизации сборки и релиза используется Fastlane (см. fastlane/Fastfile).
-- Сборка debug APK: `fastlane android build_debug`
-- Сборка release APK: `fastlane android build_release`
-- Автоматическая сборка и тесты при каждом пуше — через GitHub Actions (см. .github/workflows/android-ci.yml).
-- Для публикации на Google Play или Firebase App Distribution можно добавить соответствующие lanes в Fastfile.
-
----
+## Автор
 
 Проект полностью готов к командной разработке, автоматизации и релизу! 

@@ -270,35 +270,6 @@ fun EditHabitScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Кнопка выбора звука уведомления
-                        Button(
-                            onClick = {
-                                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-                                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Выберите звук уведомления")
-                                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                                    putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, if (reminderSoundUri.isNotBlank()) Uri.parse(reminderSoundUri) else null)
-                                }
-                                ringtonePickerLauncher.launch(intent)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Icon(Icons.Filled.MusicNote, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Выбрать звук уведомления")
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Звук: $reminderSoundTitle",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
                         // Days Selection
                         Text(
                             text = "Дни недели:",

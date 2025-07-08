@@ -10,7 +10,7 @@ import com.habittracker.domain.model.MotivationalQuote
 
 @Database(
     entities = [Habit::class, HabitLog::class, MotivationalQuote::class],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 abstract class HabitDatabase : RoomDatabase() {
@@ -40,6 +40,18 @@ abstract class HabitDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE habit_logs ADD COLUMN reminderTime TEXT")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_habit_logs_habitId_date_reminderTime ON habit_logs(habitId, date, reminderTime)")
+            }
+        }
+
         fun getDatabase(context: Context): HabitDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -47,7 +59,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     "habit_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build()
                 INSTANCE = instance
                 instance

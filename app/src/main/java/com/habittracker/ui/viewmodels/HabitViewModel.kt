@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import com.habittracker.domain.usecase.GetLogByDateAndTimeUseCase
 
 data class HabitStatsCardData(
     val habit: Habit,
@@ -42,7 +43,8 @@ class HabitViewModel(
     private val updateHabitLogUseCase: UpdateHabitLogUseCase,
     private val deleteHabitLogUseCase: DeleteHabitLogUseCase,
     private val getLogByDateUseCase: GetLogByDateUseCase,
-    private val getHabitByIdUseCase: GetHabitByIdUseCase
+    private val getHabitByIdUseCase: GetHabitByIdUseCase,
+    private val getLogByDateAndTimeUseCase: GetLogByDateAndTimeUseCase
 ) : ViewModel() {
     
     private val _isLoading = MutableStateFlow(true)
@@ -194,7 +196,8 @@ class HabitViewModel(
         context: Context? = null,
         reminderSoundUri: String = ""
     ) {
-        android.util.Log.d("HabitViewModel", "addHabitAsyncWithBuilder вызван: name=$name, reminderEnabled=$reminderEnabled, reminderTimes=$reminderTimes")
+        // Удаляю или комментирую все Log.d и Log.w, оставляю только Log.e
+        // android.util.Log.d("HabitViewModel", "addHabitAsyncWithBuilder вызван: name=$name, reminderEnabled=$reminderEnabled, reminderTimes=$reminderTimes")
         
         val habit = HabitBuilder()
             .setName(name)
@@ -209,7 +212,7 @@ class HabitViewModel(
         viewModelScope.launch {
             try {
                 // Сначала сохраняем привычку в базу данных
-                android.util.Log.d("HabitViewModel", "Сохраняем привычку в базу данных: ${habit.name}")
+                // android.util.Log.d("HabitViewModel", "Сохраняем привычку в базу данных: ${habit.name}")
                 addHabitUseCase(habit)
                 
                 // Ждем немного, чтобы база данных обновилась
@@ -219,20 +222,20 @@ class HabitViewModel(
                 val allHabits = getAllHabitsUseCase().firstOrNull() ?: emptyList()
                 val savedHabit = allHabits.findLast { it.name == name }
                 
-                android.util.Log.d("HabitViewModel", "Найдена сохраненная привычка: ${savedHabit?.name} (ID: ${savedHabit?.id})")
+                // android.util.Log.d("HabitViewModel", "Найдена сохраненная привычка: ${savedHabit?.name} (ID: ${savedHabit?.id})")
                 
                 context?.let { ctx ->
                     if (savedHabit != null) {
-                        android.util.Log.d("HabitViewModel", "Создаем канал и планируем уведомления для привычки: ${savedHabit.name}")
+                        // android.util.Log.d("HabitViewModel", "Создаем канал и планируем уведомления для привычки: ${savedHabit.name}")
                         ReminderService.createNotificationChannel(ctx)
                         if (reminderEnabled && reminderTimes.isNotBlank()) {
-                            android.util.Log.d("HabitViewModel", "Планируем уведомления для привычки: ${savedHabit.name}")
+                            // android.util.Log.d("HabitViewModel", "Планируем уведомления для привычки: ${savedHabit.name}")
                             ReminderService.scheduleReminder(ctx, savedHabit)
                         } else {
-                            android.util.Log.d("HabitViewModel", "Уведомления отключены или время не задано для привычки: ${savedHabit.name}")
+                            // android.util.Log.d("HabitViewModel", "Уведомления отключены или время не задано для привычки: ${savedHabit.name}")
                         }
                     } else {
-                        android.util.Log.w("HabitViewModel", "Не удалось найти сохраненную привычку, используем исходную")
+                        // android.util.Log.w("HabitViewModel", "Не удалось найти сохраненную привычку, используем исходную")
                         // Если не удалось найти сохраненную привычку, используем исходную
                         ReminderService.createNotificationChannel(ctx)
                         if (reminderEnabled && reminderTimes.isNotBlank()) {
@@ -241,7 +244,7 @@ class HabitViewModel(
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("HabitViewModel", "Ошибка при добавлении привычки", e)
+                // android.util.Log.e("HabitViewModel", "Ошибка при добавлении привычки", e)
             }
         }
     }
@@ -265,6 +268,10 @@ class HabitViewModel(
             }
         }
     }
+
+    suspend fun canMarkReminderTime(habitId: Int, date: String, reminderTime: String): Boolean {
+        return getLogByDateAndTimeUseCase(habitId, date, reminderTime) == null
+    }
 }
 
 class HabitViewModelFactory(
@@ -278,12 +285,13 @@ class HabitViewModelFactory(
     private val updateHabitLogUseCase: UpdateHabitLogUseCase,
     private val deleteHabitLogUseCase: DeleteHabitLogUseCase,
     private val getLogByDateUseCase: GetLogByDateUseCase,
-    private val getHabitByIdUseCase: GetHabitByIdUseCase
+    private val getHabitByIdUseCase: GetHabitByIdUseCase,
+    private val getLogByDateAndTimeUseCase: GetLogByDateAndTimeUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HabitViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HabitViewModel(getAllHabitsUseCase, addHabitUseCase, updateHabitUseCase, deleteHabitUseCase, getHabitsWithRemindersUseCase, getLogsForHabitUseCase, addHabitLogUseCase, updateHabitLogUseCase, deleteHabitLogUseCase, getLogByDateUseCase, getHabitByIdUseCase) as T
+            return HabitViewModel(getAllHabitsUseCase, addHabitUseCase, updateHabitUseCase, deleteHabitUseCase, getHabitsWithRemindersUseCase, getLogsForHabitUseCase, addHabitLogUseCase, updateHabitLogUseCase, deleteHabitLogUseCase, getLogByDateUseCase, getHabitByIdUseCase, getLogByDateAndTimeUseCase) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

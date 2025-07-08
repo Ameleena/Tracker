@@ -6,6 +6,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +31,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.habittracker.data.local.PreferencesManager
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +45,7 @@ fun SettingsScreen(
     val lastQuoteId by viewModel.lastQuoteId.collectAsState()
     val notificationSoundUri by viewModel.notificationSoundUri.collectAsState()
     val context = LocalContext.current
-    var selectedSoundTitle by remember { mutableStateOf("(стандартный)") }
+    var selectedSoundTitle by remember { mutableStateOf("Авто") }
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -50,17 +53,23 @@ fun SettingsScreen(
             val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             viewModel.setNotificationSoundUri(uri?.toString())
             val ringtone = uri?.let { RingtoneManager.getRingtone(context, it) }
-            selectedSoundTitle = ringtone?.getTitle(context) ?: "(стандартный)"
-            // Пересоздаём канал с новым звуком
+            selectedSoundTitle = when {
+                uri == null || uri.toString().isBlank() -> "Авто"
+                ringtone == null -> "Без названия"
+                else -> ringtone.getTitle(context) ?: "Без названия"
+            }
             com.habittracker.ReminderService.createNotificationChannel(context)
         }
     }
     LaunchedEffect(notificationSoundUri) {
-        notificationSoundUri?.let {
-            val ringtone = RingtoneManager.getRingtone(context, Uri.parse(it))
-            selectedSoundTitle = ringtone?.getTitle(context) ?: "(стандартный)"
-        } ?: run {
-            selectedSoundTitle = "(стандартный)"
+        if (notificationSoundUri.isNullOrBlank()) {
+            selectedSoundTitle = "Авто"
+        } else {
+            val uri = Uri.parse(notificationSoundUri)
+            val ringtone = RingtoneManager.getRingtone(context, uri)
+            selectedSoundTitle = ringtone?.getTitle(context)
+                ?: uri.lastPathSegment
+                ?: "Системная мелодия"
         }
     }
 
@@ -186,9 +195,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
                     Spacer(modifier = Modifier.height(16.dp))
-                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -199,9 +206,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
-                        
                         Spacer(modifier = Modifier.width(16.dp))
-                        
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Напоминания",
@@ -215,9 +220,7 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
-                        
                         Spacer(modifier = Modifier.width(16.dp))
-                        
                         Switch(
                             checked = notificationsEnabled,
                             onCheckedChange = { viewModel.setNotificationsEnabled(it) },
@@ -229,9 +232,68 @@ fun SettingsScreen(
                             )
                         )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                try {
+                                    val intent = Intent("android.settings.APP_NOTIFICATION_CHANNEL_SETTINGS").apply {
+                                        putExtra("android.provider.extra.APP_PACKAGE", context.packageName)
+                                        putExtra("android.provider.extra.CHANNEL_ID", com.habittracker.ReminderService.CHANNEL_ID)
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    context.startActivity(intent)
+                                } catch (e: android.content.ActivityNotFoundException) {
+                                    // Fallback: открыть общие настройки уведомлений приложения
+                                    try {
+                                        val fallbackIntent = Intent("android.settings.APP_NOTIFICATION_SETTINGS").apply {
+                                            putExtra("android.provider.extra.APP_PACKAGE", context.packageName)
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                        context.startActivity(fallbackIntent)
+                                    } catch (e: Exception) {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "Не удалось открыть настройки уведомлений. Пожалуйста, откройте их вручную.",
+                                            android.widget.Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MusicNote,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Мелодия напоминаний",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "Нажмите чтобы выбрать мелодию",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Filled.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
             }
-            
+
             // Info Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -250,45 +312,19 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
                     Spacer(modifier = Modifier.height(16.dp))
-                    
                     Text(
                         text = "Версия приложения: 1.0.0",
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
                     Spacer(modifier = Modifier.height(8.dp))
-                    
                     Text(
                         text = "Последняя цитата ID: $lastQuoteId",
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
                     Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Выберите звук уведомления")
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, notificationSoundUri?.let { Uri.parse(it) })
-                            }
-                            ringtonePickerLauncher.launch(intent)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text("Выбрать звук для уведомлений: $selectedSoundTitle")
-                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
