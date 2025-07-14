@@ -241,6 +241,7 @@ class ReminderService {
                     putExtra("reminder_time", timeStr)
                     putExtra("reminder_days", habit.reminderDays)
                     putExtra("reminder_sound_uri", habit.reminderSoundUri)
+                    putExtra("is_test_notification", true) // Флаг для тестового уведомления
                 }
                 val requestCode = habit.id * 1000 + 999 + timeIdx
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -282,6 +283,7 @@ class ReminderService {
                 putExtra("reminder_days", "1")
                 putExtra("reminder_sound_uri", habit.reminderSoundUri)
                 putExtra("time_idx", 999)
+                putExtra("is_test_notification", true) // Флаг для тестового уведомления
             }
             
             val requestCode = habit.id * 1000 + 999999
@@ -315,6 +317,42 @@ class ReminderService {
                 e.printStackTrace()
             }
         }
+        
+        fun cancelTestReminders(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            
+            // Отменяем тестовые уведомления для привычки с ID 9996
+            val testHabitId = 9996
+            val times = listOf("09:00") // Время тестового уведомления
+            times.forEachIndexed { timeIdx, _ ->
+                val requestCode = testHabitId * 1000 + 999 + timeIdx
+                val intent = Intent(context, ReminderReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                )
+                pendingIntent?.let {
+                    alarmManager.cancel(it)
+                    it.cancel()
+                }
+                
+                // Отменяем быстрые тестовые уведомления
+                val quickRequestCode = testHabitId * 1000 + 999999
+                val quickIntent = Intent(context, ReminderReceiver::class.java)
+                val quickPendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    quickRequestCode,
+                    quickIntent,
+                    PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                )
+                quickPendingIntent?.let {
+                    alarmManager.cancel(it)
+                    it.cancel()
+                }
+            }
+        }
     }
 }
 
@@ -326,6 +364,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val reminderDays = intent.getStringExtra("reminder_days") ?: ""
         val dayOfWeek = LocalDate.now().dayOfWeek.value
         val timeIdx = intent.getIntExtra("time_idx", 0)
+        val isTestNotification = intent.getBooleanExtra("is_test_notification", false)
         
         if (habitId == 0) {
             return
@@ -333,7 +372,10 @@ class ReminderReceiver : BroadcastReceiver() {
         
         try {
             showNotification(context, habitId, habitName)
-            scheduleNextReminder(context, habitId, habitName, reminderTime, reminderDays, dayOfWeek, timeIdx)
+            // Не создаем повторяющийся будильник для тестовых уведомлений
+            if (!isTestNotification) {
+                scheduleNextReminder(context, habitId, habitName, reminderTime, reminderDays, dayOfWeek, timeIdx)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -348,6 +348,25 @@ fun SettingsScreen(
                     ) {
                         Text("Тест уведомления через 10 сек с выбранным звуком")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            // Отменяем все тестовые уведомления
+                            com.habittracker.ReminderService.cancelTestReminders(context)
+                            android.widget.Toast.makeText(
+                                context,
+                                "Тестовые уведомления отменены",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Отменить тестовые уведомления")
+                    }
                 }
             }
         }
